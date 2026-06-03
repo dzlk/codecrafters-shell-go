@@ -14,10 +14,10 @@ func main() {
 
 	command, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading command: ", err)
+		fmt.Fprintln(os.Stderr, "Error reading command:", err)
 		os.Exit(1)
 	}
 
 	command = command[:len(command)-1]
-	fmt.Printf("%s: commad not found", command)
+	fmt.Printf("%s: command not found", command)
 }

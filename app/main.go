@@ -26,6 +26,7 @@ func main() {
 
 		if strings.HasPrefix(cmd, "echo") {
 			fmt.Println(cmd[5:])
+			continue
 		}
 
 		fmt.Printf("%s: command not found", cmd)

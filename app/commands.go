@@ -96,5 +96,5 @@ func (cmd Cmd) exec_type() error {
 		return cmd.printf("%s: not found", args)
 	}
 
-	return cmd.printf("%s: is a shell builtin", sc)
+	return cmd.printf("%s is a shell builtin", sc)
 }

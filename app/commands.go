@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
+	"path"
 	"strings"
 )
 
@@ -20,23 +22,11 @@ const (
 )
 
 type Cmd struct {
-	out io.Writer
-
 	Type CmdType
 	Args string
 }
 
-func NewCmd(out io.Writer, s string) Cmd {
-	t, args := parseCmd(s)
-
-	return Cmd{
-		out:  out,
-		Type: t,
-		Args: args,
-	}
-}
-
-func parseCmd(s string) (CmdType, string) {
+func ParseCmd(s string) Cmd {
 	s = strings.Trim(s, " ")
 	i := strings.Index(s, " ")
 
@@ -60,41 +50,65 @@ func parseCmd(s string) (CmdType, string) {
 		args = name
 	}
 
-	return t, args
+	return Cmd{t, args}
 }
 
-func (cmd Cmd) Exec() error {
+type Executor struct {
+	binDirs []string
+	out     io.Writer
+}
+
+func NewExecutor(w io.Writer, binDirs []string) *Executor {
+	return &Executor{
+		out:     w,
+		binDirs: binDirs,
+	}
+}
+
+func (e *Executor) Exec(cmd Cmd) error {
 	switch cmd.Type {
 	case ExitCmd:
 		return nil
 	case EchoCmd:
-		return cmd.echo()
+		return e.echo(cmd.Args)
 	case TypeCmd:
-		return cmd.exec_type()
+		return e.exec_type(cmd.Args)
 	case UnknownCmd:
-		return cmd.printf("%s: command not found", cmd.Args)
+		return e.printf("%s: command not found", cmd.Args)
 	}
 
 	return errors.New("unknown type of cmd")
 }
 
-func (cmd Cmd) printf(format string, args ...any) error {
+func (e *Executor) printf(format string, args ...any) error {
 	sf := fmt.Sprintf(format, args...)
 	buf := bytes.NewBufferString(sf)
-	_, err := buf.WriteTo(cmd.out)
+	_, err := buf.WriteTo(e.out)
 	return err
 }
 
-func (cmd Cmd) echo() error {
-	return cmd.printf("%s", cmd.Args)
+func (e *Executor) echo(args string) error {
+	return e.printf("%s", args)
 }
 
-func (cmd Cmd) exec_type() error {
-	sc, args := parseCmd(cmd.Args)
+func (e *Executor) exec_type(args string) error {
+	cmd := ParseCmd(args)
 
-	if sc == UnknownCmd {
-		return cmd.printf("%s: not found", args)
+	// check builtins
+	if cmd.Type != UnknownCmd {
+		return e.printf("%s is a shell builtin", cmd.Type)
 	}
 
-	return cmd.printf("%s is a shell builtin", sc)
+	p := cmd.Args
+
+	// check executables
+	for _, d := range e.binDirs {
+		path, err := exec.LookPath(path.Join(d, p))
+		if err == nil {
+			return e.printf("%s is %s", p, path)
+		}
+	}
+
+	// not found
+	return e.printf("%s: not found", p)
 }

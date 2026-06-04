@@ -4,25 +4,26 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Print
 
 func main() {
-	e := NewExecutor(os.Stdout, getExecutablePaths())
+	pathEnv, _ := os.LookupEnv("PATH")
+	p := NewCmdParser(pathEnv)
+	e := NewExecutor(os.Stdout)
 
 	for {
 		fmt.Print("$ ")
 
-		cmd, err := readCmd()
+		cmd, err := readCmd(p)
 		if err != nil {
 			handleError(fmt.Errorf("parse cmd failed: %w", err))
 			break
 		}
 
-		if cmd.Type == ExitCmd {
+		if cmd.IsExit() {
 			break
 		}
 
@@ -41,29 +42,12 @@ func handleError(err error) {
 	os.Exit(1)
 }
 
-func readCmd() (Cmd, error) {
+func readCmd(p *CmdParser) (Cmd, error) {
 	s, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
 		return Cmd{}, err
 	}
 
-	cmd := ParseCmd(s[:len(s)-1])
+	cmd := p.Parse(s[:len(s)-1])
 	return cmd, nil
-}
-
-func getExecutablePaths() []string {
-	pathEnv, ok := os.LookupEnv("PATH")
-	binDirs := []string{}
-	if ok {
-		dirs := filepath.SplitList(pathEnv)
-
-		for _, d := range dirs {
-			info, err := os.Stat(d)
-			if !os.IsNotExist(err) && info.IsDir() {
-				binDirs = append(binDirs, d)
-			}
-		}
-	}
-
-	return binDirs
 }

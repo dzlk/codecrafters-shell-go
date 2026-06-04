@@ -32,8 +32,6 @@ func main() {
 			handleError(fmt.Errorf("exec cmd failed: %w", err))
 			break
 		}
-
-		fmt.Println()
 	}
 }
 

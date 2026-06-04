@@ -58,7 +58,7 @@ func (e *Executor) exec_type(typeCmd Cmd) error {
 
 func (e *Executor) exec(cmd Cmd) error {
 	args := strings.Fields(cmd.Args)
-	out, err := exec.Command(cmd.Path, args...).Output()
+	out, err := exec.Command(cmd.Name, args...).Output()
 
 	if err != nil {
 		return err

@@ -58,13 +58,8 @@ func (e *Executor) exec_type(typeCmd Cmd) error {
 
 func (e *Executor) exec(cmd Cmd) error {
 	args := strings.Fields(cmd.Args)
-	out, err := exec.Command(cmd.Name, args...).Output()
+	c := exec.Command(cmd.Name, args...)
+	c.Stdout = e.out
 
-	if err != nil {
-		return err
-	}
-
-	_, err = e.out.Write(out)
-
-	return nil
+	return c.Run()
 }

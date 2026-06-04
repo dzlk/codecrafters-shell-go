@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
@@ -16,29 +15,36 @@ func main() {
 
 		cmd, err := readCmd()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading command:", err)
-			os.Exit(1)
-		}
-
-		if cmd == "exit" {
+			handleError(fmt.Errorf("parse cmd failed: %w", err))
 			break
 		}
 
-		if strings.HasPrefix(cmd, "echo") {
-			fmt.Println(cmd[5:])
-			continue
+		if cmd.Type == ExitCmd {
+			break
 		}
 
-		fmt.Printf("%s: command not found", cmd)
+		err = cmd.Exec()
+		if err != nil {
+			handleError(fmt.Errorf("exec cmd failed: %w", err))
+			break
+		}
+
 		fmt.Println()
 	}
 }
 
-func readCmd() (string, error) {
-	command, err := bufio.NewReader(os.Stdin).ReadString('\n')
+func handleError(err error) {
+	fmt.Fprintln(os.Stderr, err)
+	os.Exit(1)
+}
+
+func readCmd() (Cmd, error) {
+	s, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		return "", err
+		return Cmd{}, err
 	}
 
-	return command[:len(command)-1], nil
+	cmd := NewCmd(os.Stdout, s[:len(s)-1])
+	return cmd, nil
+
 }

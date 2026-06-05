@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -24,10 +26,12 @@ func (e *Executor) Exec(cmd Cmd) error {
 	switch {
 	case cmd.IsExit():
 		return nil
-	case cmd.Name == EchoCmd:
+	case cmd.Is(EchoCmd):
 		return e.echo(cmd.Args)
-	case cmd.Name == TypeCmd:
+	case cmd.Is(TypeCmd):
 		return e.exec_type(cmd)
+	case cmd.Is(PwdCmd):
+		return e.pwd()
 	case cmd.IsExternal():
 		return e.exec(cmd)
 	}
@@ -56,6 +60,16 @@ func (e *Executor) exec_type(typeCmd Cmd) error {
 	}
 
 	return e.printf("%s is a shell builtin\n", cmd.Name)
+}
+
+func (e *Executor) pwd() error {
+	path, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(path)
+	return e.printf("%s\n", dir)
 }
 
 func (e *Executor) exec(cmd Cmd) error {

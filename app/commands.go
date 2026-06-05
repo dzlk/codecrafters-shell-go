@@ -12,6 +12,7 @@ const (
 	ExitCmd string = "exit"
 	TypeCmd string = "type"
 	EchoCmd string = "echo"
+	PwdCmd  string = "pwd"
 
 	UnknownCmd string = "unknown"
 )
@@ -24,8 +25,12 @@ type Cmd struct {
 	SubCmd *Cmd
 }
 
+func (cmd *Cmd) Is(name string) bool {
+	return cmd.Name == name
+}
+
 func (cmd *Cmd) IsExit() bool {
-	return cmd.Name == ExitCmd
+	return cmd.Is(ExitCmd)
 }
 
 func (cmd *Cmd) IsExternal() bool {
@@ -66,6 +71,8 @@ func (p *CmdParser) Parse(s string) Cmd {
 	case TypeCmd:
 		cmd := p.Parse(args)
 		return Cmd{Name: TypeCmd, Args: args, SubCmd: &cmd}
+	case PwdCmd:
+		return Cmd{Name: PwdCmd}
 	}
 
 	// check if cmd is external program

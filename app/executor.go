@@ -63,7 +63,7 @@ func (e *Executor) exec_type(typeCmd Cmd) error {
 }
 
 func (e *Executor) pwd() error {
-	path, err := os.Executable()
+	path, err := os.Getwd()
 	if err != nil {
 		return err
 	}

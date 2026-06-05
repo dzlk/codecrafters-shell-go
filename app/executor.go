@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -63,12 +62,11 @@ func (e *Executor) exec_type(typeCmd Cmd) error {
 }
 
 func (e *Executor) pwd() error {
-	path, err := os.Getwd()
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	dir := filepath.Dir(path)
 	return e.printf("%s\n", dir)
 }
 
